@@ -159,16 +159,25 @@ scr_threshold = 0.56
 mascaras = []
 for m in range(0, len(ok_dates)):
     event = df[df['DATE_TIME'] == ok_dates[m]].reset_index(drop=True)
+    if len(event) >1:
+        event = event[event['SCR'] == event['SCR'].max()]
     breakpoint()
     new_masks = plot_to_png2(opath+file_names[m]+"test.png", [ok_orig_img[m]], event,[all_center[m]],mask_threshold=mask_threshold,
             scr_threshold=scr_threshold, title=[file_names[m]], plate_scl=all_plate_scl[m])
     mascaras.append(new_masks)
 breakpoint()
+label=df['LABEL'].tolist()
+scr = df['SCR'].tolist()
+box = df['BOX'].tolist()
+cme_id = df['CME_ID'].tolist()
+date_time = df['DATE_TIME'].tolist()
+plate_scl = data['all_plate_scl'].tolist()
+output = {'MASK': mascaras, 'LABEL': label, 'SCR': scr, 'BOX': box, 'CME_ID': cme_id, 'DATE_TIME': date_time, 'PLATE_SCL': plate_scl,'orig_df': df}
 #event['MASK'] = new_masks
     #guardar un pickle con las nuevas mascaras que luego debo darle como input al infer2.
 if save_pickle:
     with open(opath+'/'+str.lower("new_masks")+ending+'.pkl', 'wb') as write_file:
-        pickle.dump(mascaras, write_file)
+        pickle.dump(output, write_file)
 breakpoint()
 #necesito recuperar la nueva mascara.
 #breakpoint()
