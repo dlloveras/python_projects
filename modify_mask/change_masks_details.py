@@ -107,6 +107,7 @@ def plot_to_png2(ofile, orig_img, event, all_center, mask_threshold, scr_thresho
             axs[i+1].axis('off') 
             for b in range(len(event['LABEL'])):
                 scr = event['SCR'][b]
+                #breakpoint()
                 if scr > scr_threshold:             
                     if contador ==0:
                         masked = nans.copy()            
@@ -121,7 +122,7 @@ def plot_to_png2(ofile, orig_img, event, all_center, mask_threshold, scr_thresho
             points = plt.ginput(n=100, timeout=0)
             #expand the points 2 pixels in all directions
             for point in points:
-                masked[int(point[1])-2:int(point[1])+2, int(point[0])-2:int(point[0])+2] = np.nan
+                masked[int(point[1])-4:int(point[1])+4, int(point[0])-4:int(point[0])+4] = np.nan
             #for point in points:
             #    masked[int(point[1]), int(point[0])] = np.nan
             #use ginput to select points in the image
@@ -142,53 +143,56 @@ def plot_to_png2(ofile, orig_img, event, all_center, mask_threshold, scr_thresho
         masks[b][np.where(np.isnan(masked))] = min_treshold
         #breakpoint()
     return masks
-"""
-Este archivo es para modificar las mascaras de las CMEs que se detectaron en el archivo full_parametros_pre_plot2.pkl,
-que es una salida del neural_cme_seg_diego.py.
-Usualmente las mascaras obtenidas con imageens reales salen con errores, por lo que se necesita modificarlas. Este codigo
-permite modificarlas a mano, haciendo click en la imagen y seleccionando los pixeles que se quieren modificar.
-"""
 
+"""
+Este archivo es para terminar de modificar las mascaras de las CMEs que ya hayan sido modificadas y guardadas por change_masks.py.
+A veces al correr el neural_cme_seg_diego con las mascaras modificadas por change_masks.py, se obtienen parametros inadecuados. Para eso
+usamos este archivo que permite terminar de limpiar pixeles que no hemos limpiado con change_masks.py.
+Luego debemos volver a ingresar las mascaras en la red neuronal e iterar hasta que los parametros calculados coincidan con la mascara que queremos utilizar.
+"""
 
 
 save_pickle = True
-#ending = '20110215_cor2a'
-#data = read_pickle('full_parametros_pre_plot2_20110215_cor2a.pkl')
-ending = '20110215_cor2b'
+ending = '20110215_cor2b_v1'
+#data = read_pickle('new_masks20110215_cor2b.pkl')
 data = read_pickle('full_parametros_pre_plot2_20110215_cor2b.pkl')
-ok_dates = data['ok_dates']
-df = data['df']
-all_center = data['all_center']
-ok_orig_img = data['ok_orig_img']
-all_plate_scl = data['all_plate_scl']
+#old_data  = read_pickle('full_parametros_pre_plot2.pkl')
 file_names = data['file_names']
-opath = '/data_local/python_projects/modify_mask/'
-ofile = 'test.png'
+#breakpoint()
+ok_dates = data['OK_DATES']
+label = data['LABEL']
+scr = data['SCR']
+box = data['BOX']
+cme_id = data['CME_ID']
+all_plate_scl = data['PLATE_SCL']
+ok_orig_img = data['OK_ORIG_IMG']
+old_masks = data['MASK']
+df = data['orig_df']
+date_time = df['DATE_TIME']
+all_center = data['all_center']
+
+
+opath = '/data_local/python_projects/modify_mask'
 mask_threshold = 0.6
 scr_threshold = 0.56
 mascaras = []
-label = []
-scr = []
-box = []
-cme_id = []
-date_time = []
+#breakpoint()
 for m in range(0, len(ok_dates)):
-    event = df[df['DATE_TIME'] == ok_dates[m]].reset_index(drop=True)
-    if len(event) >1:
-        event = event[event['SCR'] == event['SCR'].max()]
-    breakpoint()
-    new_masks = plot_to_png2(opath+file_names[m]+"test.png", [ok_orig_img[m]], event,[all_center[m]],mask_threshold=mask_threshold,
+    event = {'MASK': [old_masks[m][0]], 'LABEL': [label[m]], 'SCR': [scr[m]], 'BOX': [box[m]], 'CME_ID': [cme_id[m]],'DATE_TIME': [ok_dates[m]]}
+    #event = df[df['DATE_TIME'] == ok_dates[m]].reset_index(drop=True)
+    #if len(event) >1:
+    #    event = event[event['SCR'] == event['SCR'].max()]
+    #breakpoint()
+    new_masks = plot_to_png2(opath+file_names[m]+"remodificado.png", [ok_orig_img[m]], event,[all_center[m]],mask_threshold=mask_threshold,
             scr_threshold=scr_threshold, title=[file_names[m]], plate_scl=all_plate_scl[m])
     mascaras.append(new_masks)
-    label.append(event['LABEL'].tolist())
-    scr.append(event['SCR'].tolist())
-    box.append(event['BOX'].tolist())
-    cme_id.append(event['CME_ID'].tolist())
-    date_time.append(event['DATE_TIME'].tolist())
+#breakpoint()
 
 output = {'MASK': mascaras, 'LABEL': label, 'SCR': scr, 'BOX': box, 'CME_ID': cme_id, 'OK_DATES': ok_dates,'OK_ORIG_IMG' : ok_orig_img,
             'PLATE_SCL': all_plate_scl,'orig_df': df, 'file_names': file_names, 'DATE_TIME': date_time, 'all_center': all_center}
+#event['MASK'] = new_masks
     #guardar un pickle con las nuevas mascaras que luego debo darle como input al infer2.
+
 if save_pickle:
     with open(opath+'/'+str.lower("new_masks")+ending+'.pkl', 'wb') as write_file:
         pickle.dump(output, write_file)
