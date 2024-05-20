@@ -117,8 +117,8 @@ Luego debemos volver a ingresar las mascaras en la red neuronal e iterar hasta q
 
 
 save_pickle = True
-ending = '20110215_cor2b_v2'
-data = read_pickle('new_masks20110215_cor2b_v1.pkl')
+ending = '20110215_cor2b_v13'
+data = read_pickle('new_masks20110215_cor2b_v12.pkl')
 #data = read_pickle('new_masks20110215_cor2a_test.pkl')
 #breakpoint()
 #old_data  = read_pickle('full_parametros_pre_plot2.pkl')
@@ -148,7 +148,7 @@ for m in range(0, len(ok_dates)):
     #event = df[df['DATE_TIME'] == ok_dates[m]].reset_index(drop=True)
     #if len(event) >1:
     #    event = event[event['SCR'] == event['SCR'].max()]
-    breakpoint()
+    #breakpoint()
     new_masks = plot_to_png2(opath+file_names[m]+"remodificado.png", [ok_orig_img[m]], event,[all_center[m]],mask_threshold=mask_threshold,
             scr_threshold=scr_threshold, title=[file_names[m]], plate_scl=all_plate_scl[m])
     mascaras.append(new_masks)
@@ -163,7 +163,7 @@ breakpoint()
 if save_pickle:
     with open(opath+'/'+str.lower("new_masks")+ending+'.pkl', 'wb') as write_file:
         pickle.dump(output, write_file)
-breakpoint()
+#breakpoint()
 #necesito recuperar la nueva mascara.
 #breakpoint()
 
