@@ -158,7 +158,7 @@ ending = '20110215_cor2b_v1'
 data = read_pickle('full_parametros_pre_plot2_20110215_cor2b.pkl')
 #old_data  = read_pickle('full_parametros_pre_plot2.pkl')
 file_names = data['file_names']
-#breakpoint()
+breakpoint()
 ok_dates = data['OK_DATES']
 label = data['LABEL']
 scr = data['SCR']
