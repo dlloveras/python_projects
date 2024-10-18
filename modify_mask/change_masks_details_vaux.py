@@ -117,8 +117,8 @@ Luego debemos volver a ingresar las mascaras en la red neuronal e iterar hasta q
 
 
 save_pickle = True
-ending = '20110215_cor2b_v13'
-data = read_pickle('new_masks20110215_cor2b_v12.pkl')
+ending = '20100403_cor2a_v2'
+data = read_pickle('new_masks20100403_cor2a_v1.pkl')
 #data = read_pickle('new_masks20110215_cor2a_test.pkl')
 #breakpoint()
 #old_data  = read_pickle('full_parametros_pre_plot2.pkl')
@@ -137,8 +137,9 @@ date_time = df['DATE_TIME']
 all_center = data['all_center']
 
 
-opath = '/data_local/python_projects/modify_mask'
-mask_threshold = 0.6
+#opath = '/data_local/python_projects/modify_mask'
+opath = '/data1/Python/python_projects/modify_mask'
+mask_threshold = 0.8
 scr_threshold = 0.56
 mascaras = []
 #breakpoint()

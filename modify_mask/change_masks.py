@@ -117,17 +117,21 @@ permite modificarlas a mano, haciendo click en la imagen y seleccionando los pix
 save_pickle = True
 #ending = '20110215_cor2a'
 #data = read_pickle('full_parametros_pre_plot2_20110215_cor2a.pkl')
-ending = '20110215_cor2b_v1'
-data = read_pickle('full_parametros_pre_plot2_20110215_cor2b.pkl')
+#ending = '20110215_cor2b_v1'
+#data = read_pickle('full_parametros_pre_plot2_20110215_cor2b.pkl')
+#opath = '/data_local/python_projects/modify_mask/'
+#----------------------------
+ending = '20100403_cor2a_v1'
+data = read_pickle('full_parametros_pre_plot2_20100403_cor2a_niemela.pkl')
 ok_dates = data['ok_dates']
 df = data['df']
 all_center = data['all_center']
 ok_orig_img = data['ok_orig_img']
 all_plate_scl = data['all_plate_scl']
 file_names = data['file_names']
-opath = '/data_local/python_projects/modify_mask/'
-ofile = 'test.png'
-mask_threshold = 0.6
+opath = '/data1/Python/python_projects/modify_mask/'
+#ofile = 'test.png'
+mask_threshold = 0.8
 scr_threshold = 0.56
 mascaras = []
 label = []
@@ -149,7 +153,7 @@ for m in range(0, len(ok_dates)):
     box.append(event['BOX'].tolist())
     cme_id.append(event['CME_ID'].tolist())
     date_time.append(event['DATE_TIME'].tolist())
-
+    breakpoint()
 output = {'MASK': mascaras, 'LABEL': label, 'SCR': scr, 'BOX': box, 'CME_ID': cme_id, 'OK_DATES': ok_dates,'OK_ORIG_IMG' : ok_orig_img,
             'PLATE_SCL': all_plate_scl,'orig_df': df, 'file_names': file_names, 'DATE_TIME': date_time, 'all_center': all_center}
     #guardar un pickle con las nuevas mascaras que luego debo darle como input al infer2.
