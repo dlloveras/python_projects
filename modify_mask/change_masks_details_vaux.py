@@ -80,6 +80,8 @@ def plot_to_png2(ofile, orig_img, event, all_center, mask_threshold, scr_thresho
                     axs[i+1].add_patch(box)
                     axs[i+1].scatter(round(all_center[0][0]), round(all_center[0][1]), color='red', marker='x', s=100)
                     axs[i+1].annotate(obj_labels[event['LABEL'][b]]+':'+'{:.2f}'.format(scr),xy=event['BOX'][b][0:2], fontsize=15, color=color[int(event['CME_ID'][b])])
+                    levels = [0.8,0.9]
+                    axs[i+1].contour(masks, levels=levels, colors=color[b], linestyles='dashed')
                     #breakpoint()
             points = plt.ginput(n=100, timeout=0)
             #expand the points 2 pixels in all directions
@@ -117,8 +119,15 @@ Luego debemos volver a ingresar las mascaras en la red neuronal e iterar hasta q
 
 
 save_pickle = True
+<<<<<<< HEAD
 ending = '20100403_cor2a_v2'
 data = read_pickle('new_masks20100403_cor2a_v1.pkl')
+=======
+#ending = '20100403_cor2b_v3'#'20110215_cor2b_v13'
+ending = '20100403_cor2b_v6'
+data = read_pickle('new_masks20100403_cor2b_v5.pkl')
+#data = read_pickle('new_masks20110215_cor2b_v12.pkl')
+>>>>>>> fea6850f5a5521087706046a77eb81697e77e3d4
 #data = read_pickle('new_masks20110215_cor2a_test.pkl')
 #breakpoint()
 #old_data  = read_pickle('full_parametros_pre_plot2.pkl')
@@ -137,8 +146,12 @@ date_time = df['DATE_TIME']
 all_center = data['all_center']
 
 
+<<<<<<< HEAD
 #opath = '/data_local/python_projects/modify_mask'
 opath = '/data1/Python/python_projects/modify_mask'
+=======
+opath = '/data_local/python_projects/modify_mask'
+>>>>>>> fea6850f5a5521087706046a77eb81697e77e3d4
 mask_threshold = 0.8
 scr_threshold = 0.56
 mascaras = []
