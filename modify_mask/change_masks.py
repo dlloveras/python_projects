@@ -117,21 +117,13 @@ permite modificarlas a mano, haciendo click en la imagen y seleccionando los pix
 save_pickle = True
 #ending = '20110215_cor2a'
 #data = read_pickle('full_parametros_pre_plot2_20110215_cor2a.pkl')
-<<<<<<< HEAD
-#ending = '20110215_cor2b_v1'
-#data = read_pickle('full_parametros_pre_plot2_20110215_cor2b.pkl')
-#opath = '/data_local/python_projects/modify_mask/'
-#----------------------------
-ending = '20100403_cor2a_v1'
-data = read_pickle('full_parametros_pre_plot2_20100403_cor2a_niemela.pkl')
-=======
 #ending = '20100403_cor2a_v1'
 #data = read_pickle('full_parametros_pre_plot2_20100403_cor2a_niemela.pkl')
 #ending = '20100403_cor2b_v1'
 #data = read_pickle('full_parametros_pre_plot2_20100403_cor2b_niemela.pkl')
 ending = '20100403_lascoc2_v1'
 data = read_pickle('full_parametros_pre_plot2_20100403_lascoc2_niemela.pkl')
->>>>>>> fea6850f5a5521087706046a77eb81697e77e3d4
+
 ok_dates = data['ok_dates']
 df = data['df']
 all_center = data['all_center']
