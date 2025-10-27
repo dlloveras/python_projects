@@ -96,7 +96,7 @@ def rec2pol(mask, center=None):
     pol_mask=[]
     #creates an array with zero value inside the mask and Nan value outside             
     masked = nans.copy()
-    #breakpoint()
+    breakpoint()
     masked[:, :][mask > mask_threshold] = 0   
     #calculates geometric center of the image
     height, width = masked.shape
@@ -124,6 +124,54 @@ def rec2pol(mask, center=None):
                     angle+=360
                 pol_mask.append([distance,angle])
     return pol_mask
+
+def rec2pol2(mask, center=None):
+    mask_threshold = 0.54
+    #nans = np.full(mask.shape, np.nan)
+    pol_mask=[]
+    
+    masked = mask.copy()
+    #breakpoint()
+    masked[:, :][mask > mask_threshold] = 0   
+
+    height, width = masked.shape
+    if center is None:
+        center_x = width / 2
+        center_y = height / 2
+    else:
+        #case center is defined as input. 
+        center_x = center[0]
+        center_y = height-center[1]
+
+    for x in range(width):
+        for y in range(height):
+            #value=masked[x,y]
+            x_dist = (x-center_x)
+            y_dist = (y-center_y)
+            distance= np.sqrt(x_dist**2 + y_dist**2)
+            angle = np.degrees(np.arctan2(x_dist,y_dist))
+            if angle<0:
+                angle+=360
+            pol_mask.append([distance,angle])
+    return pol_mask
+
+def rec2pol2_mesh(mask, center=None):
+    height, width = mask.shape
+    if center is None:
+        center_x = width / 2
+        center_y = height / 2
+    else:
+        center_x = center[0]
+        center_y = height - center[1]
+    x_coords, y_coords = np.meshgrid(np.arange(width), np.arange(height))
+
+    x_cart = x_coords - center_x
+    y_cart = center_y - y_coords
+
+    # 4. Calculate distance (radius) for every pixel
+    # This is an ndarray of shape (height, width)
+    distance_mesh = np.sqrt(x_cart**2 + y_cart**2)
+    return distance_mesh
 
 def get_mask_props(masks, scores=None, plate_scl=1,centerpix=None, percentiles=[5,95],debug =False,filename_debug=None,sat=None):
     """
@@ -290,7 +338,7 @@ def calculate_metrics_list(mask1, mask2,threshold_mask=True):
     return precision_list, recall_list, dice_list, iou_list, NSD_list
 
 
-def plot_to_png_contornos(ofile, orig_img, masks, true_mask=None, scr_threshold=0.3, mask_threshold=0.54 , title=None,string=None, 
+def plot_to_png_contornos(ofile, orig_img, masks, true_mask1=None, true_mask2=None, scr_threshold=0.3, mask_threshold=0.54 , title=None,string=None, 
                 labels=None, boxes=None, scores=None, version='v4',anotations=None,plot_boxes=None,not_plot_labels=None):
     """
     Plot the input images (orig_img) along with the infered masks, labels and scores
@@ -325,12 +373,16 @@ def plot_to_png_contornos(ofile, orig_img, masks, true_mask=None, scr_threshold=
         if string is not None:
             ax1.text(0, 0, string,horizontalalignment='left',verticalalignment='bottom',
             fontsize=15,color='white',transform=ax1.transAxes)
-        if true_mask is not None:
+        if true_mask1 is not None:
             masked = nans.copy()
-            masked[true_mask[i] > 0] = 3 
+            masked[true_mask1[i] > 0] = 3
             mask_converted = np.nan_to_num(masked, nan=2.0)
             ax1.contour(mask_converted, levels=[2.5], colors='darkblue', alpha=0.99,linewidths=4)
-        
+        if true_mask2 is not None:
+            masked = nans.copy()
+            masked[true_mask2[i] > 0] = 3
+            mask_converted = np.nan_to_num(masked, nan=2.0)
+            ax1.contour(mask_converted, levels=[2.5], colors='green', alpha=0.99,linewidths=4)
         if boxes is not None:
             nb = 0
             for boxs in boxes[i]:
@@ -344,12 +396,16 @@ def plot_to_png_contornos(ofile, orig_img, masks, true_mask=None, scr_threshold=
                 if scr > scr_threshold:             
                     if np.nanmax(masks[i][nb]) < 0.1:
                         breakpoint()
-                    if true_mask is not None:
-                        best_iou, best_dice, best_prec, best_rec,max_iou, max_dice, max_prec, max_rec = best_mask_treshold(masks[i][nb], orig_img, true_mask[i],mask_thresholds_list=[mask_threshold])                    
-                        ax1.contour(masks[i][nb], levels=[best_iou], colors='red', alpha=0.9,linewidths=4) 
-                        ax1.annotate('IoU : '+'{:.2f}'.format(max_iou) ,xy=[10,30], fontsize=45, color='white')
-                        #breakpoint()
-                    if true_mask is None:
+                    if true_mask1 is not None:
+                        best_iou, best_dice, best_prec, best_rec,max_iou1, max_dice, max_prec, max_rec = best_mask_treshold(masks[i][nb], orig_img, true_mask1[i],mask_thresholds_list=[mask_threshold])
+                        ax1.contour(masks[i][nb], levels=[best_iou], colors='red', alpha=0.9,linewidths=4)
+                        if true_mask2 is None: ax1.annotate('IoU : '+'{:.2f}'.format(max_iou1) ,xy=[10,30], fontsize=45, color='white')
+                    if true_mask2 is not None:
+                        best_iou, best_dice, best_prec, best_rec,max_iou2, max_dice, max_prec, max_rec = best_mask_treshold(masks[i][nb], orig_img, true_mask2[i],mask_thresholds_list=[mask_threshold])
+                        ax1.annotate('IoU : ',xy=[10,30], fontsize=45, color='white') 
+                        ax1.annotate('{:.2f}'.format(max_iou1),xy=[95,30], fontsize=45, color='blue')     
+                        ax1.annotate('{:.2f}'.format(max_iou2),xy=[180,30], fontsize=45, color='green')
+                    if true_mask1 is None:
                         ax1.contour(masks[i][nb], levels=[0.5], colors=color[nb], alpha=0.9,linewidths=4)
                     if plot_boxes is None:
                         box =  mpl.patches.Rectangle(boxs[0:2],boxs[2]-boxs[0],boxs[3]-boxs[1], linewidth=4, edgecolor=color[nb], facecolor='none') # add box
@@ -364,10 +420,34 @@ def plot_to_png_contornos(ofile, orig_img, masks, true_mask=None, scr_threshold=
     plt.tight_layout()
     plt.savefig(ofile)
     plt.close()
-    #except:
-    #    print(f"Error plotting the image {ofile}. Check the input data.")
-    #    return 0,0
-    return 0,0
+
+    return 
+
+def retocando_manual_mask(mask=None,plate_scl=None,centerpix=None,sat=None):
+    '''
+    Function to retouch manual masks if needed.
+    Currently does nothing, but can be modified to include retouching logic.
+    '''
+    if centerpix is None:
+        centerpix = [mask.shape[0]/2,mask.shape[1]/2]
+    #breakpoint()
+    #replace False values on mask with 0
+    mask_aux = mask.copy()
+    #mask = np.nan_to_num(mask, nan=0)
+    #pol_mask=rec2pol2(mask,center=centerpix)
+    salida = rec2pol2_mesh(mask_aux,center=centerpix)
+    #breakpoint()
+    if sat == 0:
+        min_occ = 2.6 # Rs
+    if sat == 1:
+        min_occ = 3.9 # Rs
+    if sat == 2:
+        min_occ = 2.15 # Rs
+    
+    inside = salida < min_occ/plate_scl
+    #breakpoint()
+    mask[inside] = False
+    return mask
 
 def best_mask_treshold(masks, orig_img, vesMask, mask_thresholds_list=np.arange(0.2, 0.95, 0.05).tolist()):
     #nans = np.full(np.shape(orig_img[0]), np.nan)
@@ -401,126 +481,122 @@ def best_mask_treshold(masks, orig_img, vesMask, mask_thresholds_list=np.arange(
 
 
 dir = '/data2/DNN_masks/manual_masking_hebe/'
-pkl_files = [f for f in os.listdir(dir) if (f.endswith('.pkl') and 'Fer' in f)]
-#aux_output = '_hebe_manual_mask_new_angles'
-aux_output = '_fer_manual_mask_new_angles'
-breakpoint()
+pkl_files_hebe = [f for f in os.listdir(dir) if f.endswith('.pkl') and 'Hebe' in f]
+pkl_files_fer  = [f for f in os.listdir(dir) if f.endswith('.pkl') and 'Fer' in f]
+aux_output = '_hebe_manual_mask_new_angles'
 model = 'A6DS32'
 model_version = 'A6'
 mask_threshold = 0.54
-#file = 'inference_base_event_GCS_20101212_A6_DS32fran_file__Hebe_v1_with_manual_masks.pkl'
-#file = 'inference_base_event_GCS_20101214_A6_DS32fran_file__Hebe_v1_with_manual_masks.pkl'
+#make 2 lists
+
+fechas_hebe = [pkl_files_hebe[j].split('_')[4] for j in range(len(pkl_files_hebe))]
+fechas_fer  = [pkl_files_fer[j].split('_')[4]  for j in range(len(pkl_files_fer))]
+set_hebe = set(fechas_hebe)
+set_fer  = set(fechas_fer)
+if len(fechas_hebe) != len(set_hebe):
+    breakpoint() #look for repeated events
+if set_hebe != set_fer:
+    breakpoint()
+
+#sort pkl_files_hebe based on fechas_hebe
+
+pkl_files_hebe = [x for _, x in sorted(zip(fechas_hebe, pkl_files_hebe), key=lambda pair: pair[0])]
+pkl_files_fer = [x for _, x in sorted(zip(fechas_fer, pkl_files_fer), key=lambda pair: pair[0])]
+files_to_iterate = [[pkl_files_hebe[j], pkl_files_fer[j]] for j in range(len(pkl_files_hebe))]
 event_short = {}
-for file in pkl_files:
-    #if '20110317' not in file: #remove
-    #    continue
-    print(file)
-    with open(dir+file, 'rb') as f:
-        event = pickle.load(f)
-        create_date = 0
+iou_manuales = []
+for elements in files_to_iterate:
+    file1, file2 = elements
+    if '20130527' not in file1:
+        continue
+    breakpoint()
+    print(file1, file2)
+    #breakpoint()
+    with open(dir+file1, 'rb') as f: event1 = pickle.load(f)
+    with open(dir+file2, 'rb') as f: event2 = pickle.load(f)
+    create_date = 0
+    
+    for sat in range(3):
+        #if sat != 0: #remove
+        #    continue
+        mask_manual1 = event1['manual_masks'][0][sat]
+        mask_manual2 = event2['manual_masks'][0][sat]
         
-        for sat in range(3):
-            #if sat != 0: #remove
+        for instant in range(len(mask_manual1)):
+            #if instant != 6: #remove
             #    continue
-            iou_list = []
-            nsd_list = []
-            area_manual_list = []
-            apex_manual_list = []
-            apex_ang_manual_list = []
-            aw_min_manual_list = []
-            aw_max_manual_list = []
-            wcpa_manual_list = []
-            area_dnn_list = []
-            apex_dnn_list = []
-            apex_angl_dnn_list = []
-            aw_min_dnn_list = []
-            aw_max_dnn_list = []
-            wcpa_dnn_list = []
-            time_list = []
-            mask_manual = event['manual_masks'][0][sat]
-            for instant in range(len(mask_manual)):
-                #if instant != 6: #remove
-                #    continue
-                print(f'{instant}_{sat}')
-                mask_manual = event['manual_masks'][0][sat][instant]
+            print(f'{instant}_{sat}')
+            mask_manual1 = event1['manual_masks'][0][sat][instant]
+            mask_manual2 = event2['manual_masks'][0][sat][instant]
+            if len(mask_manual1) == 0:
+                continue
+            if create_date == 0:
+                date_event = ''.join(event1['dates'][sat][instant].split('T')[0].split('-'))
+                folder = date_event
+                event_short[date_event] = {}
+                create_date = 1
+            center_pix   = event1['centerpix'][sat][instant]
+            plt_scale    = event1['plate_scl'][sat][instant]
+            labels       = event1['labels'][sat][instant]
+            scores       = event1['scores'][sat][instant]
+            boxes        = event1['boxes'][sat][instant]
+            orig_imagen  = event1['orig_img'][sat][instant]
+            mask_dnn1    = event1['masks'][sat][instant]
+            mask_dnn2    = event2['masks'][sat][instant]
+            #breakpoint()
+            for k in range(len(mask_dnn1)):
+                if np.sum(mask_dnn1[k] != mask_dnn2[k]) != 0:
+                    breakpoint()
+            time1        = event1['dates'][sat][instant]
+            time2        = event2['dates'][sat][instant]
+            if time1 != time2:
+                breakpoint()
+            if len(mask_dnn1) == 0:
+                print(f'No DNN masks for event {date_event}, sat {sat}, instant {instant}')
+                continue
+            date_str    = event1['dates'][sat][instant][:-7]
+            #breakpoint()
+            #retocamos las macascas manuales, forzamos el occ interno.
+            mask1_retoque = retocando_manual_mask(mask=mask_manual1, plate_scl=plt_scale, centerpix=center_pix, sat=sat)
+            mask2_retoque = retocando_manual_mask(mask=mask_manual2, plate_scl=plt_scale, centerpix=center_pix, sat=sat)
+            mask_manual1 = mask1_retoque
+            mask_manual2 = mask2_retoque
 
-                if len(mask_manual) == 0:
-                    continue
-                if create_date == 0:
-                    date_event = ''.join(event['dates'][sat][instant].split('T')[0].split('-'))
-                    folder = date_event
-                    event_short[date_event] = {}
-                    create_date = 1
-                center_pix  = event['centerpix'][sat][instant]
-                plt_scale   = event['plate_scl'][sat][instant]
-                labels      = event['labels'][sat][instant]
-                scores      = event['scores'][sat][instant]
-                boxes       = event['boxes'][sat][instant]
-                orig_imagen = event['orig_img'][sat][instant]
-                mask_dnn    = event['masks'][sat][instant]
-                time        = event['dates'][sat][instant]
-                if len(mask_dnn) == 0:
-                    print(f'No DNN masks for event {date_event}, sat {sat}, instant {instant}')
-                    continue
-                date_str    = event['dates'][sat][instant][:-7]
-                a,b,c,all_iou,all_nsd = calculate_metrics_list(mask_dnn, mask_manual)
-                iou_selected = max( (iou, index) for index, iou in enumerate(all_iou) if labels[index] == 2)
-                imax_old     = iou_selected[1]
-                imax_old2 = np.argmax(all_iou)
-                if all_iou[imax_old2] != iou_selected[0]:
-                    #may happen if there is trully no dnn mask intersecting the manual mask
-                    print(f'Warning: Different max iou selected for event {date_event}, sat {sat}, instant {instant}')
-                iou      = all_iou[imax_old]
-                nsd      = all_nsd[imax_old]
-                #se podria aplicar el occ interno para mejorar las mascaras manuales
-                #hacer que el get mask props guarde los histogramas, modo debug.
-                mask_props_manual = get_mask_props(mask_manual,plate_scl=plt_scale,centerpix=center_pix,debug=False,filename_debug=f'debug_manual_{date_event}_sat{sat}_inst{instant}',sat=sat)
-                #append results to the event dictionary
-                iou_list.append(iou)
-                nsd_list.append(nsd)
-                time_list.append(time)
-                area_manual_list.append(mask_props_manual[0][7])
-                apex_manual_list.append(mask_props_manual[0][8])
-                apex_ang_manual_list.append(mask_props_manual[0][9])
-                aw_min_manual_list.append(mask_props_manual[0][5])
-                aw_max_manual_list.append(mask_props_manual[0][6])
-                wcpa_manual_list.append(mask_props_manual[0][1])
-                mask_props_dnn    = get_mask_props(mask_dnn[imax_old],plate_scl=plt_scale,centerpix=center_pix,debug=False,filename_debug=f'debug_dnn_{date_event}_sat{sat}_inst{instant}',sat=sat)
-                #append results to the event dictionary for DNN
-                area_dnn_list.append(mask_props_dnn[0][7])
-                apex_dnn_list.append(mask_props_dnn[0][8])
-                apex_angl_dnn_list.append(mask_props_dnn[0][9])
-                aw_min_dnn_list.append(mask_props_dnn[0][5])
-                aw_max_dnn_list.append(mask_props_dnn[0][6])
-                wcpa_dnn_list.append(mask_props_dnn[0][1])
+            a1,b1,c1,all_iou1,all_nsd1 = calculate_metrics_list(mask_dnn1, mask_manual1)
+            a2,b2,c2,all_iou2,all_nsd2 = calculate_metrics_list(mask_dnn1, mask_manual2)
+            iou_selected = max( (iou, index) for index, iou in enumerate(all_iou1) if labels[index] == 2)
+            imax_old     = iou_selected[1]
+            imax_old2 = np.argmax(all_iou1)
+            if all_iou1[imax_old2] != iou_selected[0]:
+                #may happen if there is trully no dnn mask intersecting the manual mask
+                print(f'Warning: Different max iou selected for event {date_event}, sat {sat}, instant {instant}')
+            iou1      = all_iou1[imax_old]
+            iou2      = all_iou2[imax_old]
+            nsd       = all_nsd1[imax_old]
+            #breakpoint()
+            TP = np.sum(np.logical_and(mask_manual1, mask_manual2))
+            FP = np.sum(np.logical_and(mask_manual1, np.logical_not(mask_manual2)))
+            FN = np.sum(np.logical_and(np.logical_not(mask_manual1), mask_manual2))
+            iou_manual = TP / (TP + FP + FN) if TP + FP + FN > 0 else 0
+            #_,_,_,iou_manual,_ = calculate_metrics_list(mask_manual1, mask_manual2)
+            iou_manuales.append(iou_manual)
+            ofile = os.path.join(dir+folder,date_str+'_sat_'+str(sat)+'_doble_retoque.png')
+            if not os.path.exists(dir+folder):
+                os.makedirs(dir+folder)
+            orig_imagen = event1['orig_img'][sat][instant]
+            plot_to_png_contornos(ofile, [orig_imagen], [[mask_dnn1[imax_old]]], [mask_manual1], [mask_manual2],scores=[[scores[imax_old]]], labels=[[labels[imax_old]]], boxes=[[boxes[imax_old]]],
+                                    mask_threshold=mask_threshold, scr_threshold=0.1, version=model_version,string=None,anotations=date_str,not_plot_labels=True)
+    #breakpoint()
 
-                ofile = os.path.join(dir+folder,date_str+'_sat_'+str(sat)+'.png')
-                if not os.path.exists(dir+folder):
-                    os.makedirs(dir+folder)
-                orig_imagen = event['orig_img'][sat][instant]
-                #breakpoint()
-                #añadir inputs como aw_min, aw_max, cpa angle, apex distance y plotearlos en la imagen.
-                #a, b = plot_to_png_contornos(ofile, [orig_imagen], [[mask_dnn[imax_old]]], [mask_manual], scores=[[scores[imax_old]]], labels=[[labels[imax_old]]], boxes=[[boxes[imax_old]]],
-                #                    mask_threshold=mask_threshold, scr_threshold=0.1, version=model_version,string=None,anotations=date_str,not_plot_labels=True)
-            event_short[date_event][sat]={
-                'time': time_list,
-                'iou': iou_list,
-                'nsd': nsd_list,
-                'wcpa_manual': wcpa_manual_list,
-                'area_manual': area_manual_list,
-                'apex_manual': apex_manual_list,
-                'apex_angle_manual': apex_ang_manual_list,
-                'aw_min_list_manual': aw_min_manual_list,
-                'aw_max_list_manual': aw_max_manual_list,
-                'wcpa_dnn': wcpa_dnn_list,
-                'area_dnn': area_dnn_list,
-                'apex_dnn': apex_dnn_list,
-                'apex_angle_dnn': apex_angl_dnn_list,
-                'aw_min_list_dnn': aw_min_dnn_list,
-                'aw_max_list_dnn': aw_max_dnn_list
-            }
+#create histogram of iou_manuales
+plt.hist(iou_manuales, bins=20)
+mediana = np.median(iou_manuales)
+plt.axvline(x=mediana, color='r', linestyle='--', label='Median: {:.2f}'.format(mediana))
+plt.xlabel('IoU between manual masks')
+plt.ylabel('Number of cases')
+plt.title('Histogram of IoU between manual masks')
+plt.savefig('/data2/DNN_masks/iou_manuals_histogram'+aux_output+'.png')
+plt.close()
 breakpoint()
-with open('/data2/DNN_masks/output_dict_'+model+aux_output+'v2.pkl', 'wb') as f:
-    pickle.dump(event_short, f)
 
 

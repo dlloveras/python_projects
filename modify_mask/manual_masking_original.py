@@ -90,13 +90,13 @@ def onclick(event):
 
 #####main
 
-dir_path     = '/gehme-gpu2/tools/manual_mask/input/'
-dir_path_out = '/gehme-gpu2/tools/manual_mask/output/'
+dir_path     = '/data2/DNN_masks/'#'/gehme-gpu2/tools/manual_mask/input/'
+dir_path_out = '/data1/Python/python_projects/modify_mask/'
 #make a list of all pkl files in the directory
 #pkl_files = [f for f in os.listdir(dir_path) if f.endswith('.pkl')]
 
 #select a specific event
-selected_event = 'inference_base_event_GCS_20130608_A6_DS32fran_file_.pkl'
+selected_event = 'inference_base_event_GCS_20130527_A6_DS32fran_file_.pkl'
 
 #open the selected pkl file
 with open(os.path.join(dir_path, selected_event), 'rb') as f:
@@ -179,7 +179,7 @@ all_manual_masks = [allmanual_maska, allmanual_maskb, allmanual_maskl]
 all_points = [allmanual_pointsa ,allmanual_pointsb, allmanual_pointsl]
 event_data['manual_masks'] = [all_manual_masks] 
 event_data['manual_points'] = [all_points]
-aux = 'Fer_v1_' #i.e. 'Diego_v1_'
+aux = 'Fer_v2_'
 output_name = selected_event.split('.')[0]+'_'+aux+'with_manual_masks.pkl'
 with open(os.path.join(dir_path_out, output_name), 'wb') as f:
     pickle.dump(event_data, f)
